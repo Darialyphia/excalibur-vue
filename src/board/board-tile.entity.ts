@@ -37,6 +37,6 @@ export class BoardTile {
   get isoTile() {
     const point = indexToPoint(this.index, this.board.columns);
 
-    return this.board.getTileAt(point.x, point.y);
+    return this.board.getTileAt(point.x, point.y)!;
   }
 }

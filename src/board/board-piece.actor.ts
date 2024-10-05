@@ -24,7 +24,7 @@ export class BoardPieceActor extends Actor {
         }
       });
     });
-    this.setIsoPosition(0.001); // tile z seems to be 0 if we have a delay of 0
+    this.setIsoPosition(0);
   }
 
   setBoardPosition(vec: Vector, duration = 0) {

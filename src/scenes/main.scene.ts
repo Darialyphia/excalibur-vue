@@ -65,10 +65,7 @@ export class MainScene extends Scene {
   }
 
   onTileClick({ boardTile }: { boardTile: BoardTile }) {
-    this.units.forEach(unit => {
-      unit.setBoardPosition(vec(boardTile.isoTile!.x, boardTile.isoTile!.y), 0.5);
-    });
-    // this.footman.setBoardPosition(vec(rotatedPoint.x, rotatedPoint.y), 0.5);
+    this.addUnit(boardTile.isoTile.x, boardTile.isoTile.y);
   }
 
   centerCamera() {
