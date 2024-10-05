@@ -11,28 +11,28 @@ import {
 import { Board } from '../board/board.entity';
 import { HoveredCellActor } from '../ui/actors/hovered-cell.actor';
 import { Unit } from '../unit/unit.actor';
+import { BoardTile } from '../board/board-tile.entity';
 
 export class MainScene extends Scene {
   private board!: Board;
 
-  private footman!: Unit;
+  private units: Unit[] = [];
 
   override onInitialize(): void {
     this.setupBoard();
     this.setupUi();
     this.setupCamera();
     this.setupInputs();
-    this.setupUnit();
   }
 
-  private setupUnit() {
-    this.footman = new Unit({
+  addUnit(x: number, y: number) {
+    const unit = new Unit({
       board: this.board,
-      boardPosition: vec(0, 0),
+      boardPosition: vec(x, y),
       resource: resources.footman
     });
-
-    this.board.addChild(this.footman);
+    this.units.push(unit);
+    this.board.addChild(unit);
   }
 
   private setupUi() {
@@ -64,19 +64,11 @@ export class MainScene extends Scene {
     this.board.events.on('tileClick', this.onTileClick.bind(this));
   }
 
-  onTileClick({ tile }: { tile: IsometricTile }) {
-    if (!tile.solid) return;
-    const index = pointToIndex(tile, this.board.columns);
-    const rotatedIndex = getRotatedIndex(
-      rotateAndFlat(MAP, this.board.angle, MAP_COLS),
-      index,
-      {
-        angle: (360 - this.board.angle) as RotationAngleDeg,
-        width: this.board.columns
-      }
-    );
-    const rotatedPoint = indexToPoint(rotatedIndex, MAP_COLS);
-    this.footman.setBoardPosition(vec(rotatedPoint.x, rotatedPoint.y), 0.5);
+  onTileClick({ boardTile }: { boardTile: BoardTile }) {
+    this.units.forEach(unit => {
+      unit.setBoardPosition(vec(boardTile.isoTile!.x, boardTile.isoTile!.y), 0.5);
+    });
+    // this.footman.setBoardPosition(vec(rotatedPoint.x, rotatedPoint.y), 0.5);
   }
 
   centerCamera() {

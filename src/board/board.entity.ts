@@ -3,7 +3,6 @@ import {
   EntityEvents,
   EventEmitter,
   IsometricMap,
-  IsometricTile,
   PolygonCollider,
   Scene,
   Shape,
@@ -12,7 +11,7 @@ import {
   Vector
 } from 'excalibur';
 import { AtlasCoords, BoardTile } from './board-tile.entity';
-import { indexToPoint, rotateAndFlat, RotationAngleDeg } from '../utils';
+import { getRotatedIndex, indexToPoint, rotateAndFlat, RotationAngleDeg } from '../utils';
 
 export type BoardOptions = {
   tileWidth: number;
@@ -25,7 +24,7 @@ export type BoardOptions = {
 
 export type BoardEvents = {
   rotate: {};
-  tileClick: { tile: IsometricTile; event: PointerEvent };
+  tileClick: { boardTile: BoardTile; event: PointerEvent };
 };
 
 export class Board extends Entity {
@@ -58,7 +57,7 @@ export class Board extends Entity {
     this._columns = options.columns;
     this._rows = options.rows;
     this.tiles = options.tiles.map(
-      tile => new BoardTile({ atlasCoords: tile, board: this })
+      (tile, index) => new BoardTile({ atlasCoords: tile, board: this, index })
     );
 
     this.tileCollider = Shape.Polygon([
@@ -68,10 +67,21 @@ export class Board extends Entity {
       vec(this.isoMap.tileWidth / 2, this.isoMap.tileHeight)
     ]);
 
-    this.isoMap.tiles.forEach(tile => {
+    this.isoMap.tiles.forEach((tile, index) => {
       tile.on('pointerup', event => {
         if (!tile.solid) return;
-        this.events.emit('tileClick', { tile, event });
+        const rotatedIndex = getRotatedIndex(
+          rotateAndFlat(this.tiles, this.angle, this.baseColumns),
+          index,
+          {
+            angle: (360 - this.angle) as RotationAngleDeg,
+            width: this.columns
+          }
+        );
+
+        const boardTile = this.tiles[rotatedIndex];
+
+        this.events.emit('tileClick', { boardTile, event });
       });
     });
 

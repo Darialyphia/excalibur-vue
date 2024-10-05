@@ -24,6 +24,7 @@ export class BoardPieceActor extends Actor {
         }
       });
     });
+    this.setIsoPosition(0.001); // tile z seems to be 0 if we have a delay of 0
   }
 
   setBoardPosition(vec: Vector, duration = 0) {
@@ -46,19 +47,23 @@ export class BoardPieceActor extends Actor {
 
     const worldPos = this.board.tileToWorld(vec(rotatedPoint.x, rotatedPoint.y));
 
+    const updateZ = () => {
+      const tileCoords = this.board.worldToTileFloat(this.pos);
+      const tile = this.board.getTileAt(
+        Math.ceil(tileCoords.x),
+        Math.ceil(tileCoords.y)
+      )!;
+
+      this.z = tile.get(TransformComponent).z + 1;
+    };
+
     gsap.to(this.pos, {
       x: worldPos.x,
       y: worldPos.y,
       duration,
       ease: Power2.easeInOut,
-      onUpdate: () => {
-        const tileCoords = this.board.worldToTileFloat(this.pos);
-        const tile = this.board.getTileAt(
-          Math.ceil(tileCoords.x),
-          Math.ceil(tileCoords.y)
-        )!;
-        this.z = tile.get(TransformComponent).z + 1;
-      }
+      onUpdate: updateZ,
+      onComplete: updateZ
     });
   }
 }
