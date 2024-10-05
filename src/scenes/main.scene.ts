@@ -9,69 +9,34 @@ import {
   RotationAngleDeg
 } from '../utils';
 import { Board } from '../board/board.entity';
-
-const state = {
-  footman: {
-    x: 0,
-    y: 0
-  }
-};
+import { HoveredCellActor } from '../ui/actors/hovered-cell.actor';
+import { Unit } from '../unit/unit.actor';
 
 export class MainScene extends Scene {
   private board!: Board;
 
-  private footman = new Actor();
-
-  private hoveredCell = new Actor({
-    y: ISO_TILE_HEIGHT / 2
-  });
+  private footman!: Unit;
 
   override onInitialize(): void {
     this.setupBoard();
+    this.setupUi();
     this.setupCamera();
     this.setupInputs();
+    this.setupUnit();
+  }
 
-    this.hoveredCell.graphics.use(resources.hoveredCell.getAnimation('idle')!);
-    this.footman.graphics.use(resources.footman.getAnimation('idle')!);
+  private setupUnit() {
+    this.footman = new Unit({
+      board: this.board,
+      boardPosition: vec(0, 0),
+      resource: resources.footman
+    });
+
     this.board.addChild(this.footman);
   }
 
-  updateHoveredCell() {
-    const pos = this.input.pointers.primary.lastWorldPos;
-    if (!pos) {
-      this.hoveredCell.unparent();
-      return;
-    }
-
-    const tile = this.board.getTileByWorldPoint(pos);
-    if (!tile) {
-      this.hoveredCell.unparent();
-      return;
-    }
-
-    if (this.hoveredCell.parent === tile || !tile.solid) return;
-    this.hoveredCell.unparent();
-    tile.addChild(this.hoveredCell);
-    this.hoveredCell.z = tile.get(TransformComponent).z;
-  }
-
-  onPreUpdate() {
-    const pos = this.input.pointers.primary.lastWorldPos;
-    if (!pos) {
-      this.hoveredCell.unparent();
-      return;
-    }
-
-    const tile = this.board.getTileByWorldPoint(pos);
-    if (!tile) {
-      this.hoveredCell.unparent();
-      return;
-    }
-
-    if (this.hoveredCell.parent === tile || !tile.solid) return;
-    this.hoveredCell.unparent();
-    tile.addChild(this.hoveredCell);
-    this.hoveredCell.z = tile.get(TransformComponent).z;
+  private setupUi() {
+    this.add(new HoveredCellActor(this.board));
   }
 
   private setupInputs() {
@@ -83,6 +48,7 @@ export class MainScene extends Scene {
       }
     });
   }
+
   private setupBoard() {
     this.board = new Board({
       columns: MAP_COLS,
@@ -96,12 +62,6 @@ export class MainScene extends Scene {
     this.board.addToScene(this);
 
     this.board.events.on('tileClick', this.onTileClick.bind(this));
-    this.board.events.on('rotate', () => {
-      this.centerCamera();
-      this.moveFootman(0);
-      this.footman.graphics.flipHorizontal =
-        this.board.angle === 90 || this.board.angle === 180;
-    });
   }
 
   onTileClick({ tile }: { tile: IsometricTile }) {
@@ -116,35 +76,7 @@ export class MainScene extends Scene {
       }
     );
     const rotatedPoint = indexToPoint(rotatedIndex, MAP_COLS);
-
-    state.footman = rotatedPoint;
-    this.moveFootman(0.5);
-  }
-
-  moveFootman(duration: number) {
-    const rotatedPoint = indexToPoint(
-      getRotatedIndex(MAP, pointToIndex(state.footman, MAP_COLS), {
-        angle: this.board.angle,
-        width: MAP_COLS
-      }),
-      this.board.columns
-    );
-
-    const worldPos = this.board.tileToWorld(vec(rotatedPoint.x, rotatedPoint.y));
-    gsap.to(this.footman.pos, {
-      x: worldPos.x,
-      y: worldPos.y,
-      duration,
-      ease: Power2.easeInOut,
-      onUpdate: () => {
-        const tileCoords = this.board.worldToTileFloat(this.footman.pos);
-        const tile = this.board.getTileAt(
-          Math.ceil(tileCoords.x),
-          Math.ceil(tileCoords.y)
-        )!;
-        this.footman.z = tile.get(TransformComponent).z + 1;
-      }
-    });
+    this.footman.setBoardPosition(vec(rotatedPoint.x, rotatedPoint.y), 0.5);
   }
 
   centerCamera() {
@@ -159,5 +91,7 @@ export class MainScene extends Scene {
   private setupCamera() {
     this.camera.zoom = 2;
     this.centerCamera();
+
+    this.board.events.on('rotate', this.centerCamera.bind(this));
   }
 }

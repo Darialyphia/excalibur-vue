@@ -78,14 +78,46 @@ export class Board extends Entity {
     this.updateTiles();
   }
 
+  get tileHeight() {
+    return this.isoMap.tileHeight;
+  }
+
+  get tileWidth() {
+    return this.isoMap.tileWidth;
+  }
+
   get angle() {
     return this._angle;
   }
 
+  get isoTiles() {
+    return this.isoMap.tiles;
+  }
+
+  /**
+   * return ths board columns count when rotation angle is 0
+   */
+  get baseColumns() {
+    return this._columns;
+  }
+
+  /**
+   * return ths board rows count when rotation angle is 0
+   */
+  get baseRows() {
+    return this._rows;
+  }
+
+  /**
+   * return ths board columns count, taking current rotation angle into account
+   */
   get columns() {
     return this._angle % 180 === 0 ? this._columns : this._rows;
   }
 
+  /**
+   * return ths board columns rows, taking current rotation angle into account
+   */
   get rows() {
     return this._angle % 180 === 0 ? this._rows : this._columns;
   }
