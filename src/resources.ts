@@ -13,8 +13,8 @@ export const resources = {
   mapSheet: new ImageSource(mapSheetPath),
   hoveredCell: new AsepriteResource(hoveredCellPath),
   footman: new AsepriteResource(footmanPath),
-  archerPath: new AsepriteResource(archerPath),
-  paladinPath: new AsepriteResource(paladinPath)
+  archer: new AsepriteResource(archerPath),
+  paladin: new AsepriteResource(paladinPath)
 } as const;
 
 export const loader = new Loader();

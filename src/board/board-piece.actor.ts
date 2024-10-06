@@ -1,4 +1,4 @@
-import { Actor, GraphicsComponent, TransformComponent, vec, Vector } from 'excalibur';
+import { Actor, TransformComponent, vec, Vector } from 'excalibur';
 import { Board } from '../board/board.entity';
 import { getRotatedIndex, indexToPoint, pointToIndex } from '../utils';
 

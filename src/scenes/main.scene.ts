@@ -1,22 +1,27 @@
-import { Actor, IsometricTile, Scene, TransformComponent, vec, Vector } from 'excalibur';
+import {
+  Actor,
+  IsometricTile,
+  Scene,
+  SceneActivationContext,
+  TransformComponent,
+  vec,
+  Vector
+} from 'excalibur';
 import { ISO_TILE_HEIGHT, ISO_TILE_WIDTH, MAP, MAP_COLS, MAP_ROWS } from '../constants';
 import { mapSheet, resources } from '../resources';
-import {
-  getRotatedIndex,
-  indexToPoint,
-  pointToIndex,
-  rotateAndFlat,
-  RotationAngleDeg
-} from '../utils';
 import { Board } from '../board/board.entity';
 import { HoveredCellActor } from '../ui/actors/hovered-cell.actor';
 import { Unit } from '../unit/unit.actor';
 import { BoardTile } from '../board/board-tile.entity';
+import { UiState } from '../App.vue';
+import { Ref } from 'vue';
 
 export class MainScene extends Scene {
   private board!: Board;
 
   private units: Unit[] = [];
+
+  private uiState!: Ref<UiState>;
 
   override onInitialize(): void {
     this.setupBoard();
@@ -25,12 +30,15 @@ export class MainScene extends Scene {
     this.setupInputs();
   }
 
+  override onActivate(context: SceneActivationContext<Ref<UiState>>): void {
+    this.uiState = context.data!;
+  }
+
   addUnit(x: number, y: number) {
-    console.log(resources.footman, resources.footman.getSpriteSheet());
     const unit = new Unit({
       board: this.board,
       boardPosition: vec(x, y),
-      resource: resources.footman
+      resource: this.uiState.value.selectedUnitData.resource
     });
     this.units.push(unit);
     this.board.addChild(unit);
