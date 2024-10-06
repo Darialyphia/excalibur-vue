@@ -26,6 +26,7 @@ export class MainScene extends Scene {
   }
 
   addUnit(x: number, y: number) {
+    console.log(resources.footman, resources.footman.getSpriteSheet());
     const unit = new Unit({
       board: this.board,
       boardPosition: vec(x, y),

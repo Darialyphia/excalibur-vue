@@ -17,12 +17,8 @@ export class BoardPieceActor extends Actor {
     this.board = options.board;
     this.boardPosition = options.boardPosition;
     this.board.events.on('rotate', () => {
-      this.children.forEach(child => {
-        const graphics = child.get(GraphicsComponent);
-        if (graphics) {
-          graphics.flipHorizontal = this.board.angle === 90 || this.board.angle === 180;
-        }
-      });
+      this.graphics.flipHorizontal = this.board.angle === 90 || this.board.angle === 180;
+      this.setIsoPosition(0);
     });
     this.setIsoPosition(0);
   }
@@ -35,7 +31,7 @@ export class BoardPieceActor extends Actor {
   private setIsoPosition(duration: number) {
     const rotatedPoint = indexToPoint(
       getRotatedIndex(
-        this.board.isoTiles,
+        this.board.tiles,
         pointToIndex(this.boardPosition, this.board.baseColumns),
         {
           angle: this.board.angle,
@@ -44,7 +40,6 @@ export class BoardPieceActor extends Actor {
       ),
       this.board.columns
     );
-
     const worldPos = this.board.tileToWorld(vec(rotatedPoint.x, rotatedPoint.y));
 
     const updateZ = () => {

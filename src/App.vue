@@ -19,7 +19,7 @@ onMounted(() => {
     scenes: {
       main: MainScene
     },
-    displayMode: DisplayMode.FitScreenAndFill
+    displayMode: DisplayMode.FitContainerAndFill
   });
 
   game
@@ -40,5 +40,28 @@ onMounted(() => {
 </script>
 
 <template>
-  <canvas ref="canvas" />
+  <div class="container">
+    <canvas ref="canvas" />
+
+    <div class="ui"></div>
+  </div>
 </template>
+
+<style lang="postcss" scoped>
+.container {
+  height: 100dvh;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+
+  > * {
+    grid-column: 1;
+    grid-row: 1;
+  }
+}
+
+.ui {
+  pointer-events: none;
+}
+</style>
