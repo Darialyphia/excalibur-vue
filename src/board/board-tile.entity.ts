@@ -1,6 +1,6 @@
-import { IsometricMap } from 'excalibur';
+import { Component, Entity, TransformComponent, vec } from 'excalibur';
 import { Board } from './board.entity';
-import { getRotatedIndex, indexToPoint, RotationAngleDeg } from '../utils';
+import { getRotatedIndex, indexToPoint } from '../utils';
 
 export type AtlasCoords = [number, number];
 
@@ -23,8 +23,19 @@ export class BoardTile {
     this._index = options.index;
   }
 
+  addChild<T extends Component>(entity: Entity<T>) {
+    this.isoTile.addChild(entity);
+
+    return entity;
+  }
+
+  get z() {
+    return this.isoTile.get(TransformComponent).z;
+  }
+
   get boardPosition() {
-    return indexToPoint(this._index, this.board.baseColumns);
+    const point = indexToPoint(this._index, this.board.baseColumns);
+    return vec(point.x, point.y);
   }
 
   get index() {
@@ -37,6 +48,18 @@ export class BoardTile {
   get isoTile() {
     const point = indexToPoint(this.index, this.board.columns);
 
-    return this.board.getTileAt(point.x, point.y)!;
+    return this.board.getIsoTileAt(point.x, point.y)!;
+  }
+
+  get isOccupied() {
+    return this.board.pieces.some(piece => piece.solid && piece.boardTile?.equals(this));
+  }
+
+  get boardPieces() {
+    return this.board.pieces.filter(piece => piece.boardTile?.equals(this));
+  }
+
+  equals(tile: BoardTile) {
+    return this.boardPosition.equals(tile.boardPosition);
   }
 }

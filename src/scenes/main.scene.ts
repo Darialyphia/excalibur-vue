@@ -1,51 +1,43 @@
-import {
-  Actor,
-  IsometricTile,
-  Scene,
-  SceneActivationContext,
-  TransformComponent,
-  vec,
-  Vector
-} from 'excalibur';
+import { Scene, SceneActivationContext, vec, Vector } from 'excalibur';
 import { ISO_TILE_HEIGHT, ISO_TILE_WIDTH, MAP, MAP_COLS, MAP_ROWS } from '../constants';
-import { mapSheet, resources } from '../resources';
+import { boardSheet } from '../resources';
 import { Board } from '../board/board.entity';
-import { HoveredCellActor } from '../ui/actors/hovered-cell.actor';
+import { HoveredCell } from '../ui/actors/hovered-cell.actor';
 import { Unit } from '../unit/unit.actor';
 import { BoardTile } from '../board/board-tile.entity';
 import { UiState } from '../App.vue';
 import { Ref } from 'vue';
+import { BoardPieceHighlight } from '../board/board-tile-highlight';
 
 export class MainScene extends Scene {
   private board!: Board;
 
-  private units: Unit[] = [];
-
   private uiState!: Ref<UiState>;
 
-  override onInitialize(): void {
+  override onActivate(context: SceneActivationContext<Ref<UiState>>): void {
+    this.uiState = context.data!;
     this.setupBoard();
     this.setupUi();
     this.setupCamera();
     this.setupInputs();
   }
 
-  override onActivate(context: SceneActivationContext<Ref<UiState>>): void {
-    this.uiState = context.data!;
-  }
+  private addUnit(boardTile: BoardTile) {
+    if (!this.uiState.value.selectedUnitData) return;
 
-  addUnit(x: number, y: number) {
     const unit = new Unit({
       board: this.board,
-      boardPosition: vec(x, y),
-      resource: this.uiState.value.selectedUnitData.resource
+      boardPosition: vec(boardTile.boardPosition.x, boardTile.boardPosition.y),
+      unitData: this.uiState.value.selectedUnitData,
+      uiState: this.uiState
     });
-    this.units.push(unit);
-    this.board.addChild(unit);
+
+    this.board.addBoardPiece(unit, boardTile);
+    this.uiState.value.selectUnit(unit);
   }
 
   private setupUi() {
-    this.add(new HoveredCellActor(this.board));
+    this.add(new HoveredCell(this.board, this.uiState));
   }
 
   private setupInputs() {
@@ -65,19 +57,38 @@ export class MainScene extends Scene {
       tileHeight: ISO_TILE_HEIGHT,
       tileWidth: ISO_TILE_WIDTH,
       tiles: MAP,
-      spritesheet: mapSheet
+      spritesheet: boardSheet
     });
 
+    this.board.tiles.forEach(tile => {
+      this.board.addBoardPiece(
+        new BoardPieceHighlight({
+          board: this.board,
+          boardPosition: tile.boardPosition,
+          uiState: this.uiState
+        }),
+        tile
+      );
+    });
     this.board.addToScene(this);
 
-    this.board.events.on('tileClick', this.onTileClick.bind(this));
+    this.board.events.on('tileClick', ({ boardTile }) => {
+      const unit = boardTile.boardPieces.find(piece => piece instanceof Unit);
+      if (unit) {
+        return this.uiState.value.selectUnit(unit);
+      }
+
+      if (this.uiState.value.selectedUnit) {
+        return this.uiState.value.selectedUnit.canMoveTo(boardTile)
+          ? this.uiState.value.selectedUnit.moveTo(boardTile.boardPosition)
+          : this.uiState.value.selectUnit(null);
+      }
+
+      this.addUnit(boardTile);
+    });
   }
 
-  onTileClick({ boardTile }: { boardTile: BoardTile }) {
-    this.addUnit(boardTile.isoTile.x, boardTile.isoTile.y);
-  }
-
-  centerCamera() {
+  private centerCamera() {
     const center = this.board.tileToWorld(
       this.board.angle % 180 === 0
         ? new Vector(MAP_COLS / 2, MAP_ROWS / 2)

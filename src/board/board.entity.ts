@@ -11,7 +11,14 @@ import {
   Vector
 } from 'excalibur';
 import { AtlasCoords, BoardTile } from './board-tile.entity';
-import { getRotatedIndex, indexToPoint, rotateAndFlat, RotationAngleDeg } from '../utils';
+import {
+  getRotatedIndex,
+  indexToPoint,
+  pointToIndex,
+  rotateAndFlat,
+  RotationAngleDeg
+} from '../utils';
+import { BoardPiece } from './board-piece.actor';
 
 export type BoardOptions = {
   tileWidth: number;
@@ -44,6 +51,8 @@ export class Board extends Entity {
 
   public readonly tiles: BoardTile[];
 
+  public readonly pieces: BoardPiece[] = [];
+
   constructor(options: BoardOptions) {
     super();
     this.isoMap = new IsometricMap({
@@ -67,11 +76,14 @@ export class Board extends Entity {
       vec(this.isoMap.tileWidth / 2, this.isoMap.tileHeight)
     ]);
 
-    this.isoMap.tiles.forEach((tile, index) => {
+    this.isoMap.tiles.forEach(tile => {
       tile.on('pointerup', event => {
         if (!tile.solid) return;
+
+        const index = pointToIndex({ x: tile.x, y: tile.y }, this.columns);
+
         const rotatedIndex = getRotatedIndex(
-          rotateAndFlat(this.tiles, this.angle, this.baseColumns),
+          rotateAndFlat(this.tiles, this._angle, this._columns),
           index,
           {
             angle: (360 - this.angle) as RotationAngleDeg,
@@ -80,7 +92,6 @@ export class Board extends Entity {
         );
 
         const boardTile = this.tiles[rotatedIndex];
-
         this.events.emit('tileClick', { boardTile, event });
       });
     });
@@ -136,10 +147,11 @@ export class Board extends Entity {
     scene.add(this.isoMap);
   }
 
-  addChild(entity: Entity<any>) {
-    this.isoMap.addChild(entity);
+  addBoardPiece(piece: BoardPiece, tile: BoardTile) {
+    if (tile.isOccupied) return;
 
-    return entity;
+    this.pieces.push(piece);
+    this.isoMap.addChild(piece);
   }
 
   getTileByWorldPoint(vec: Vector) {
@@ -147,6 +159,12 @@ export class Board extends Entity {
   }
 
   getTileAt(x: number, y: number) {
+    return this.tiles.find(
+      tile => tile.boardPosition.x === x && tile.boardPosition.y === y
+    );
+  }
+
+  getIsoTileAt(x: number, y: number) {
     return this.isoMap.getTile(x, y);
   }
 

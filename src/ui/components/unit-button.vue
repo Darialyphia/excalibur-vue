@@ -28,7 +28,7 @@ const border = `url(${borderUrl})`;
 
 <style scoped lang="postcss">
 .unit-button {
-  width: 128px;
+  width: 96px;
   aspect-ratio: 1;
   background: v-bind(src), radial-gradient(#1a1a1a, #1a1a1a 20%, black);
   background-position: center center;
