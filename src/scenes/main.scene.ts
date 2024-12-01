@@ -5,35 +5,39 @@ import { Board } from '../board/board.entity';
 import { HoveredCell } from '../ui/actors/hovered-cell.actor';
 import { Unit } from '../unit/unit.actor';
 import { BoardTile } from '../board/board-tile.entity';
-import { UiState } from '../App.vue';
-import { Ref } from 'vue';
+import { UiState } from '../App-old.vue';
 import { BoardPieceHighlight } from '../board/board-tile-highlight';
+import { Pathfinder } from '../pathfinding/pathfinder';
 
 export class MainScene extends Scene {
   private board!: Board;
 
-  private uiState!: Ref<UiState>;
+  private uiState!: UiState;
 
-  override onActivate(context: SceneActivationContext<Ref<UiState>>): void {
+  private pathFinder!: Pathfinder;
+
+  override onActivate(context: SceneActivationContext<UiState>): void {
     this.uiState = context.data!;
     this.setupBoard();
     this.setupUi();
     this.setupCamera();
     this.setupInputs();
+    this.pathFinder = new Pathfinder(this.board, this.uiState);
   }
 
   private addUnit(boardTile: BoardTile) {
-    if (!this.uiState.value.selectedUnitData) return;
+    if (!this.uiState.selectedUnitData.value) return;
 
     const unit = new Unit({
       board: this.board,
       boardPosition: vec(boardTile.boardPosition.x, boardTile.boardPosition.y),
-      unitData: this.uiState.value.selectedUnitData,
-      uiState: this.uiState
+      unitData: this.uiState.selectedUnitData.value,
+      uiState: this.uiState,
+      pathfinder: this.pathFinder
     });
 
     this.board.addBoardPiece(unit, boardTile);
-    this.uiState.value.selectUnit(unit);
+    this.uiState.selectUnit(unit);
   }
 
   private setupUi() {
@@ -75,16 +79,19 @@ export class MainScene extends Scene {
     this.board.events.on('tileClick', ({ boardTile }) => {
       const unit = boardTile.boardPieces.find(piece => piece instanceof Unit);
       if (unit) {
-        return this.uiState.value.selectUnit(unit);
+        this.uiState.selectUnit(unit);
+        return;
       }
 
-      if (this.uiState.value.selectedUnit) {
-        return this.uiState.value.selectedUnit.canMoveTo(boardTile)
-          ? this.uiState.value.selectedUnit.moveTo(boardTile.boardPosition)
-          : this.uiState.value.selectUnit(null);
+      if (!this.uiState.selectedUnit.value) {
+        return this.addUnit(boardTile);
       }
 
-      this.addUnit(boardTile);
+      if (this.uiState.selectedUnit.value.canMoveTo(boardTile)) {
+        this.uiState.selectedUnit.value.moveTo(boardTile);
+      }
+
+      this.uiState.selectUnit(null);
     });
   }
 
@@ -98,7 +105,7 @@ export class MainScene extends Scene {
   }
 
   private setupCamera() {
-    this.camera.zoom = 2;
+    this.camera.zoom = 3;
     this.centerCamera();
 
     this.board.events.on('rotate', this.centerCamera.bind(this));

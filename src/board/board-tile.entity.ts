@@ -6,6 +6,7 @@ export type AtlasCoords = [number, number];
 
 export type BoardTileOptions = {
   atlasCoords: AtlasCoords;
+  isWalkable: boolean;
   board: Board;
   index: number;
 };
@@ -17,8 +18,11 @@ export class BoardTile {
 
   private _index: number;
 
+  readonly isWalkable: boolean;
+
   constructor(options: BoardTileOptions) {
     this.atlasCoords = options.atlasCoords;
+    this.isWalkable = options.isWalkable;
     this.board = options.board;
     this._index = options.index;
   }

@@ -1,21 +1,21 @@
 import { BoardPiece, BoardPieceOptions } from '../board/board-piece.actor';
-import { UiState } from '../App.vue';
-import { Ref, watchEffect } from 'vue';
-import { movementSheet } from '../resources';
+import { UiState } from '../App-old.vue';
+import { watchEffect } from 'vue';
+import { resources } from '../resources';
 import { ISO_TILE_HEIGHT } from '../constants';
 import { Engine, vec } from 'excalibur';
 
 export type BoardTileHighlight = Omit<BoardPieceOptions, 'solid'> & {
-  uiState: Ref<UiState>;
+  uiState: UiState;
 };
 
 export class BoardPieceHighlight extends BoardPiece {
-  private uiState: Ref<UiState>;
+  private uiState: UiState;
 
   constructor(options: BoardTileHighlight) {
     super({ ...options, solid: false });
     this.uiState = options.uiState;
-    this.graphics.use(movementSheet.getSprite(0, 0), {
+    this.graphics.use(resources.tileHighlights.getAnimation('movement')!, {
       offset: vec(0, ISO_TILE_HEIGHT)
     });
     this.graphics.opacity = 0;
@@ -25,16 +25,20 @@ export class BoardPieceHighlight extends BoardPiece {
     super.onInitialize(engine);
 
     watchEffect(() => {
-      if (!this.uiState.value.selectedUnit) {
-        gsap.to(this.graphics, { opacity: 0, duration: 0.3, ease: Power2.easeInOut });
-        return;
-      }
+      this.updateHighlight();
+    });
+  }
 
-      gsap.to(this.graphics, {
-        opacity: this.uiState.value.selectedUnit.canMoveTo(this.boardTile) ? 1 : 0,
-        duration: 0.3,
-        ease: Power2.easeInOut
-      });
+  updateHighlight() {
+    if (!this.uiState.selectedUnit.value) {
+      gsap.to(this.graphics, { opacity: 0, duration: 0.3, ease: Power2.easeInOut });
+      return;
+    }
+
+    gsap.to(this.graphics, {
+      opacity: this.uiState.selectedUnit.value.canMoveTo(this.boardTile) ? 1 : 0,
+      duration: 0.3,
+      ease: Power2.easeInOut
     });
   }
 }

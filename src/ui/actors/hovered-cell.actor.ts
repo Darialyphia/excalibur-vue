@@ -1,16 +1,16 @@
 import { Actor, Engine, TransformComponent, vec } from 'excalibur';
 import { Board } from '../../board/board.entity';
 import { resources } from '../../resources';
-import { UiState } from '../../App.vue';
-import { Ref, watch, watchEffect } from 'vue';
+import { UiState } from '../../App-old.vue';
+import { watch } from 'vue';
 import { ISO_TILE_HEIGHT } from '../../constants';
 
 export class HoveredCell extends Actor {
   private board: Board;
 
-  private uiState: Ref<UiState>;
+  private uiState: UiState;
 
-  constructor(board: Board, uiState: Ref<UiState>) {
+  constructor(board: Board, uiState: UiState) {
     super({
       y: board.tileHeight / 2
     });
@@ -25,7 +25,7 @@ export class HoveredCell extends Actor {
     });
 
     watch(
-      () => this.uiState.value.selectedUnitData,
+      () => this.uiState.selectedUnitData.value,
       unitData => {
         if (!unitData) {
           this.removeAllChildren();

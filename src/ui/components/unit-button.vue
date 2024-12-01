@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import borderUrl from '@/assets/button-border.png';
-import { UnitData } from '../../App.vue';
+import { UnitData } from '../../App-old.vue';
 
 const { unit } = defineProps<{
   unit: UnitData;

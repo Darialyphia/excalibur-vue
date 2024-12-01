@@ -1,10 +1,11 @@
 import { ImageSource, Loader, SpriteSheet } from 'excalibur';
+import { AsepriteResource } from '@excaliburjs/plugin-aseprite';
 
 import boardTilemapPath from './assets/tilemap.png?url';
 import movemementTilemapPath from './assets/movement_tilemap.png?url';
 
 import hoveredCellPath from './assets/hovered-cell.aseprite?url';
-import { AsepriteResource } from '@excaliburjs/plugin-aseprite';
+import tileHighlightsPath from './assets/tile-highlights.aseprite?url';
 
 import footmanPath from './assets/footman.aseprite?url';
 import archerPath from './assets/archer.aseprite?url';
@@ -19,7 +20,8 @@ const tilemapsResources = {
 } as const;
 
 const uiResources = {
-  hoveredCell: new AsepriteResource(hoveredCellPath)
+  hoveredCell: new AsepriteResource(hoveredCellPath),
+  tileHighlights: new AsepriteResource(tileHighlightsPath)
 } as const;
 
 const unitResources = {

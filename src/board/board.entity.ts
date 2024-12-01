@@ -2,6 +2,7 @@ import {
   Entity,
   EntityEvents,
   EventEmitter,
+  GraphicsComponent,
   IsometricMap,
   PolygonCollider,
   Scene,
@@ -25,7 +26,7 @@ export type BoardOptions = {
   tileHeight: number;
   columns: number;
   rows: number;
-  tiles: AtlasCoords[];
+  tiles: Array<{ atlasCoords: AtlasCoords; isWalkable: boolean }>;
   spritesheet: SpriteSheet;
 };
 
@@ -66,7 +67,13 @@ export class Board extends Entity {
     this._columns = options.columns;
     this._rows = options.rows;
     this.tiles = options.tiles.map(
-      (tile, index) => new BoardTile({ atlasCoords: tile, board: this, index })
+      (tile, index) =>
+        new BoardTile({
+          atlasCoords: tile.atlasCoords,
+          isWalkable: tile.isWalkable,
+          board: this,
+          index
+        })
     );
 
     this.tileCollider = Shape.Polygon([
@@ -186,6 +193,7 @@ export class Board extends Entity {
       const tile = this.isoMap.getTile(point.x, point.y)!;
       tile.solid = true;
       tile.addGraphic(sprite);
+      tile.get(GraphicsComponent);
       tile.addCollider(this?.tileCollider);
     });
 
