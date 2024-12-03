@@ -4,6 +4,7 @@ import { useAttrs, useTemplateRef, watchEffect } from 'vue';
 import { provideEngine } from '../composables/useEngine';
 import { until } from '@vueuse/core';
 import { provideCurrentActor } from '../composables/useCurrentActor';
+import { useForwardProps } from '../composables/useForwardProps';
 
 defineOptions({ inheritAttrs: false });
 const props = defineProps<EngineOptions>();
@@ -27,9 +28,9 @@ const emit = defineEmits<{
 const scene = defineModel<string>('scene');
 
 const canvasEl = useTemplateRef('canvas');
-
+const options = useForwardProps(props);
 const engine = provideEngine({
-  ...props,
+  ...options.value,
   canvasElement: canvasEl,
   emit
 });

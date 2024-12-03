@@ -1,50 +1,98 @@
-<script setup lang="ts">
-import { Entity, EntityEvents, Actor as ExActor } from 'excalibur';
+<script setup lang="ts" generic="T extends ExActor = ExActor">
+import { CollisionType, Actor as ExActor, vec } from 'excalibur';
 import { provideCurrentActor, useCurrentActor } from '../composables/useCurrentActor';
+import { useForwardProps } from '../composables/useForwardProps';
 import { useCurrentScene } from '../composables/useCurrentScene';
-import { onBeforeUnmount } from 'vue';
-import { ActorEvents } from 'excalibur/build/dist/Actor';
+import { computed, onBeforeUnmount, watch, watchEffect } from 'vue';
+import { ActorArgs, ActorEvents } from 'excalibur/build/dist/Actor';
+import { isDefined } from '../utils/helpers';
 
-export type ActorConstructor = new (...args: any[]) => ExActor;
+export type ActorConstructor<T extends ExActor = ExActor> = new (...args: any[]) => T;
 
-const props = defineProps<{
-  actor?: ActorConstructor;
-}>();
+const props = defineProps<
+  Omit<ActorArgs, 'vel'> & {
+    actor?: ActorConstructor<T>;
+    vel?: [number, number];
+    velX?: number;
+    velY?: number;
+    collisionType?: CollisionType;
+  }
+>();
 
 const emit = defineEmits<{
-  initialize: [ActorEvents['initialize']];
-  actionStart: [ActorEvents['actionstart']];
-  actioncomplete: [ActorEvents['actioncomplete']];
-  collisionstart: [ActorEvents['collisionstart']];
-  collisionend: [ActorEvents['collisionend']];
-  enterviewport: [ActorEvents['enterviewport']];
-  exitviewport: [ActorEvents['exitviewport']];
-  kill: [ActorEvents['kill']];
-  prekill: [ActorEvents['prekill']];
-  postkill: [ActorEvents['postkill']];
-  pointercancel: [ActorEvents['pointercancel']];
-  pointerdown: [ActorEvents['pointerdown']];
-  pointerup: [ActorEvents['pointerup']];
-  pointerenter: [ActorEvents['pointerenter']];
-  pointerleave: [ActorEvents['pointerleave']];
-  pointermove: [ActorEvents['pointermove']];
-  pointerwheel: [ActorEvents['pointerwheel']];
-  pointerdragenter: [ActorEvents['pointerdragenter']];
-  pointerdragleave: [ActorEvents['pointerdragleave']];
-  pointerdragmove: [ActorEvents['pointerdragmove']];
-  pointerdragstart: [ActorEvents['pointerdragstart']];
-  pointerdragend: [ActorEvents['pointerdragend']];
-  preupdate: [ActorEvents['preupdate']];
-  postupdate: [ActorEvents['postupdate']];
-  predraw: [ActorEvents['predraw']];
-  postdraw: [ActorEvents['postdraw']];
-  predebugdraw: [ActorEvents['predebugdraw']];
-  postdebugdraw: [ActorEvents['postdebugdraw']];
-  pretransformdraw: [ActorEvents['pretransformdraw']];
-  posttransformdraw: [ActorEvents['posttransformdraw']];
+  initialize: [ActorEvents['initialize'], T];
+  actionStart: [ActorEvents['actionstart'], T];
+  actioncomplete: [ActorEvents['actioncomplete'], T];
+  collisionstart: [ActorEvents['collisionstart'], T];
+  collisionend: [ActorEvents['collisionend'], T];
+  enterviewport: [ActorEvents['enterviewport'], T];
+  exitviewport: [ActorEvents['exitviewport'], T];
+  kill: [ActorEvents['kill'], T];
+  prekill: [ActorEvents['prekill'], T];
+  postkill: [ActorEvents['postkill'], T];
+  pointercancel: [ActorEvents['pointercancel'], T];
+  pointerdown: [ActorEvents['pointerdown'], T];
+  pointerup: [ActorEvents['pointerup'], T];
+  pointerenter: [ActorEvents['pointerenter'], T];
+  pointerleave: [ActorEvents['pointerleave'], T];
+  pointermove: [ActorEvents['pointermove'], T];
+  pointerwheel: [ActorEvents['pointerwheel'], T];
+  pointerdragenter: [ActorEvents['pointerdragenter'], T];
+  pointerdragleave: [ActorEvents['pointerdragleave'], T];
+  pointerdragmove: [ActorEvents['pointerdragmove'], T];
+  pointerdragstart: [ActorEvents['pointerdragstart'], T];
+  pointerdragend: [ActorEvents['pointerdragend'], T];
+  preupdate: [ActorEvents['preupdate'], T];
+  postupdate: [ActorEvents['postupdate'], T];
+  predraw: [ActorEvents['predraw'], T];
+  postdraw: [ActorEvents['postdraw'], T];
+  predebugdraw: [ActorEvents['predebugdraw'], T];
+  postdebugdraw: [ActorEvents['postdebugdraw'], T];
+  pretransformdraw: [ActorEvents['pretransformdraw'], T];
+  posttransformdraw: [ActorEvents['posttransformdraw'], T];
 }>();
 
-const actorInst = new (props.actor ?? ExActor)();
+const ctor = props.actor ?? ExActor;
+const forwardedProps = useForwardProps(props);
+const vel = computed(() => {
+  if (!isDefined(props.vel) && !isDefined(props.velX) && !isDefined(props.velY))
+    return undefined;
+  if (isDefined(props.vel)) {
+    return vec(props.vel[0], props.vel[1]);
+  }
+  return vec(props.velX ?? 0, props.velY ?? 0);
+});
+
+const actorInst = new ctor({
+  ...forwardedProps.value,
+  vel: vel.value
+});
+watch(
+  () => props.x,
+  x => {
+    if (isDefined(x)) actorInst.pos.x = x;
+  }
+);
+watch(
+  () => props.y,
+  y => {
+    if (isDefined(y)) actorInst.pos.y = y;
+  }
+);
+watch(
+  () => props.collisionType,
+  collisionType => {
+    if (isDefined(collisionType)) actorInst.body.collisionType = collisionType;
+  }
+);
+watchEffect(() => {
+  if (isDefined(props.color)) actorInst.color = props.color;
+  if (isDefined(vel.value)) {
+    actorInst.vel = vel.value;
+  }
+  if (isDefined(props.opacity)) actorInst.graphics.opacity = props.opacity;
+  if (isDefined(props.anchor)) actorInst.anchor = props.anchor;
+});
 
 // importing the ActorEvents causes a weird esbuild error, so lets list them manually
 const events = [
@@ -79,15 +127,16 @@ const events = [
   'pretransformdraw',
   'posttransformdraw'
 ];
+
 events.forEach(eventName => {
   actorInst.on(eventName, event => {
     // @ts-expect-error
-    emit(eventName, event);
+    emit(eventName, event, actorInst);
   });
 });
+
 const parent = useCurrentActor();
 const currentScene = useCurrentScene();
-
 if (parent) {
   parent.addChild(actorInst);
 } else {
@@ -96,6 +145,8 @@ if (parent) {
 
 provideCurrentActor(actorInst);
 onBeforeUnmount(actorInst.kill.bind(actorInst));
+
+defineExpose({ actor: actorInst });
 </script>
 
 <template>
